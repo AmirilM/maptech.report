@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#991B1B" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Digiplus" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./icon-192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
+  <title>Digiplus | Issue Reporting Center</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #18181B; font-family: system-ui, sans-serif; }
+    iframe { width: 100%; height: 100%; border: 0; display: block; background: #F8FAFC; }
+    #offline-bar {
+      display: none; position: fixed; inset: 0; z-index: 50;
+      background: #18181B; color: #FFF; flex-direction: column;
+      align-items: center; justify-content: center; text-align: center; padding: 24px; gap: 12px;
+    }
+    #offline-bar button, #install-btn {
+      background: #991B1B; color: #FFF; border: 0; border-radius: 10px;
+      padding: 10px 18px; font-weight: 700; font-size: 14px; cursor: pointer;
+    }
+    #install-btn {
+      display: none; position: fixed; bottom: 72px; right: 16px; z-index: 40;
+      box-shadow: 0 6px 20px rgba(0,0,0,.35);
+    }
+  </style>
+</head>
+<body>
+  <div id="offline-bar">
+    <h2>Koneksi Terputus</h2>
+    <p style="color:#A1A1AA;font-size:14px;">Cek internet toko lalu muat ulang aplikasi.</p>
+    <button onclick="location.reload()">Coba Lagi</button>
+  </div>
+
+  <button id="install-btn">Install App</button>
+
+  <iframe
+    id="gas-frame"
+    src="https://script.google.com/macros/s/AKfycby0eQvGi2B1I9okbTR-3IaVyxFFidmOanmVPaCBT8IlkMzg-930oZNZgCJU1sc7pW1IEg/exec"
+    allow="camera; microphone; geolocation"
+    allowfullscreen>
+  </iframe>
+
+  <script>
+    const offlineBar = document.getElementById('offline-bar');
+    const syncNetwork = () => { offlineBar.style.display = navigator.onLine ? 'none' : 'flex'; };
+    window.addEventListener('online', syncNetwork);
+    window.addEventListener('offline', syncNetwork);
+    syncNetwork();
+
+    let deferredPrompt;
+    const installBtn = document.getElementById('install-btn');
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.style.display = 'block';
+    });
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      installBtn.style.display = 'none';
+    });
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .catch(error => console.error('Digiplus Service Worker registration failed:', error));
+      });
+    }
+  </script>
+</body>
+</html>
